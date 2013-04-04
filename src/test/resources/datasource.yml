@@ -1,0 +1,27 @@
+## YAML Template.
+---
+users:
+    - !!bahir.server.model.User
+        id: 1
+        username: "username1"
+        email: "test1@test.com"
+        password: "0b14d501a594442a01c6859541bcb3e8164d183d32937b851835442f69d5c94e" # sha256 password1
+        salt: "dc90cf07de907ccc64636ceddb38e552a1a0d984743b1f36a447b73877012c39" # sha256 salt1
+    - !!bahir.server.model.User
+        id: 2
+        username: "username2"
+        email: "test2@test.com"
+        password: "0b14d501a594442a01c6859541bcb3e8164d183d32937b851835442f69d5c94e" # sha256 password1
+        salt: "dbc4579ae2b3ab293213f42bb852706ea995c3b5c3987f8aa9faae5004acb3cf" # sha256 salt2
+ 
+access_tokens:
+    - !!bahir.server.model.AccessToken
+        id: 1
+        token: "df3e6b0bb66ceaadca4f84cbc371fd66e04d20fe51fc414da8d1b84d31d178de" # sha256 token1
+        user: !!bahir.server.model.User
+                id: 1
+    - !!bahir.server.model.AccessToken
+        id: 2
+        token: "d8cc7aed3851ac3338fcc15df3b6807b89125837f77a75b9ecb13ed2afe3b49f" # sha256 token2
+        user: !!bahir.server.model.User
+                id: 2
