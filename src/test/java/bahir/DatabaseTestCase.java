@@ -3,40 +3,37 @@ package bahir;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
-import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.service.ServiceRegistryBuilder;
+import org.junit.Before;
 import org.yaml.snakeyaml.Yaml;
 
-public class DatabaseTestCase extends TestCase {
+public class DatabaseTestCase {
 
     public static SessionFactory sessionFactory;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
-
-        if (sessionFactory == null)
-        {
-            Configuration configuration = new Configuration();
-            configuration.configure();
-            ServiceRegistry serviceRegistry = new ServiceRegistryBuilder()
-                    .applySettings(configuration.getProperties()).buildServiceRegistry();
-            sessionFactory = configuration.buildSessionFactory(serviceRegistry);
-        }
+        Configuration configuration = new Configuration();
+        configuration.configure();
+        ServiceRegistry serviceRegistry = new ServiceRegistryBuilder()
+                .applySettings(configuration.getProperties()).buildServiceRegistry();
+        sessionFactory = configuration.buildSessionFactory(serviceRegistry);
 
         Yaml yaml = new Yaml();
         Map<String, List<Object>> all = (Map<String, List<Object>>) yaml.load(
                 FileUtils.readFileToString(
                 new File("src/test/resources/datasource.yml")));
 
-        sessionFactory.getCurrentSession().beginTransaction();
+        Session databaseSession = sessionFactory.openSession();
+        databaseSession.beginTransaction();
         for(Object user: all.get("users"))
-            sessionFactory.getCurrentSession().save(user);
-        sessionFactory.getCurrentSession().getTransaction().commit();
+            databaseSession.save(user);
+        databaseSession.getTransaction().commit();
+        databaseSession.close();
     }
 }
