@@ -105,6 +105,7 @@ public class DialogAddFriend extends javax.swing.JFrame {
 
     private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addButtonActionPerformed
 
+        DialogLoading.getInstance().setVisible(true);
         String username = usernameField.getText().toString();
         String token = Container.getResponseLogin().getToken();
 

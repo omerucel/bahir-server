@@ -6,11 +6,9 @@ import desktop.WindowConnect;
 import desktop.WindowLogin;
 import desktop.WindowRegister;
 import javax.swing.JOptionPane;
-import message.RequestLogin;
 import message.ResponseConnection;
+import message.ResponseError;
 import message.ResponseLogin;
-import message.ResponseUsernameAlreadyInUse;
-import message.ResponseUnauthorized;
 import socket.IClientEventHandler;
 
 public class MainServerConnectionEventHandler implements IClientEventHandler{
@@ -54,12 +52,9 @@ public class MainServerConnectionEventHandler implements IClientEventHandler{
             WindowConnect.getInstance().setVisible(false);
 
             WindowLogin.getInstance().setVisible(true);
-        }else if(message instanceof ResponseUnauthorized){
+        }else if(message instanceof ResponseError){
             DialogLoading.getInstance().setVisible(false);
-            JOptionPane.showMessageDialog(null, "Kullanıcı adı ya da şifre hatalı.");
-        }else if(message instanceof ResponseUsernameAlreadyInUse){
-            DialogLoading.getInstance().setVisible(false);
-            JOptionPane.showMessageDialog(null, "Seçilen kullanıcı adı ile daha önce bir hesap açılmış.");
+            JOptionPane.showMessageDialog(null, ((ResponseError)message).getMessage());
         }else if(message instanceof ResponseLogin){
             DialogLoading.getInstance().setVisible(false);
 

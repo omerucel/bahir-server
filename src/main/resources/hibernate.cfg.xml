@@ -21,5 +21,6 @@
     <property name="hbm2ddl.auto">create-drop</property>
     <mapping class="server.model.User" />
     <mapping class="server.model.AccessToken" />
+    <mapping class="server.model.UserFriend" />
   </session-factory>
 </hibernate-configuration>

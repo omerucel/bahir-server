@@ -1,12 +1,18 @@
 package server;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
+import message.RequestAddFriend;
 import message.RequestLogin;
 import message.RequestRegister;
+import message.RequestSendFriendList;
+import message.RequestUpdateFriend;
+import message.ResponseAddFriend;
+import message.ResponseError;
 import message.ResponseLogin;
-import message.ResponseUnauthorized;
-import message.ResponseUsernameAlreadyInUse;
+import message.ResponseSendFriendList;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -16,6 +22,7 @@ import org.hibernate.service.ServiceRegistry;
 import org.hibernate.service.ServiceRegistryBuilder;
 import server.model.AccessToken;
 import server.model.User;
+import server.model.UserFriend;
 import socket.ServerAbstract;
 
 public class MainServer extends ServerAbstract{
@@ -57,6 +64,19 @@ public class MainServer extends ServerAbstract{
         return user;
     }
 
+    private User getUserByToken(String token)
+    {
+        Session dbSession = getDbSessionFactory().openSession();
+
+        AccessToken accessToken = (AccessToken) dbSession.createCriteria(AccessToken.class)
+                .add(Restrictions.eq("token", token))
+                .uniqueResult();
+
+        dbSession.close();
+
+        return accessToken.getUser();
+    }
+
     private String createToken(MainClient mainClient, User user)
     {
         Session dbSession = getDbSessionFactory().openSession();
@@ -87,14 +107,14 @@ public class MainServer extends ServerAbstract{
 
         if (user == null)
         {
-            mainClient.writeObject(new ResponseUnauthorized());
+            mainClient.writeObject(new ResponseError("Girdiğiniz bilgiler hatalı."));
             return;
         }
 
         String saltedPassword = DigestUtils.sha256Hex(user.getSalt() + request.getPassword());
         if (user.getPassword().equals(saltedPassword))
         {
-            mainClient.writeObject(new ResponseUnauthorized());
+            mainClient.writeObject(new ResponseError("Girdiğiniz bilgiler hatalı."));
             return;
         }
 
@@ -108,7 +128,7 @@ public class MainServer extends ServerAbstract{
 
         if (user != null)
         {
-            mainClient.writeObject(new ResponseUsernameAlreadyInUse());
+            mainClient.writeObject(new ResponseError("Seçtiğiniz kullanıcı adı ile daha önce bir hesap açılmış."));
             return;
         }
 
@@ -129,6 +149,102 @@ public class MainServer extends ServerAbstract{
 
         mainClient.writeObject(
                 new ResponseLogin(createToken(mainClient, user)));
+    }
+
+    public synchronized void addFriend(MainClient mainClient, RequestAddFriend request)
+    {
+        User user = getUserByToken(request.getToken());
+        if (user != null)
+        {
+            mainClient.writeObject(new ResponseError("Oturum açmanız gerekiyor."));
+            return;
+        }
+
+        User friend = getUserByUsername(request.getUsername());
+        if (user != null)
+        {
+            mainClient.writeObject(new ResponseError("Arkadaş olarak eklemek istediğiniz kullanıcı adı sistemde bulunmamakta."));
+            return;
+        }
+
+        Session dbSession = getDbSessionFactory().openSession();
+
+        UserFriend userFriend = (UserFriend) dbSession.createCriteria(UserFriend.class)
+                .add(Restrictions.eq("user", user))
+                .add(Restrictions.eq("friend", friend))
+                .uniqueResult();
+
+        if (userFriend != null)
+        {
+            mainClient.writeObject(new ResponseError("Zaten ilgili kullanıcı arkadaş listenize eklenmiş. Arkadaş listenizde görünebilmesi için arkadaşlık isteğinizi onaylaması gerekmektedir."));
+            return;
+        }
+
+        // TODO : friend kullanıcısı online durumdaysa, ilgili kullanıcıya arkadaşlık isteği durumu iletilmeli.
+
+        userFriend = new UserFriend();
+        userFriend.setFriend(friend);
+        userFriend.setUser(user);
+        userFriend.setIsApproved(false);
+        dbSession.save(userFriend);
+        dbSession.close();
+
+        mainClient.writeObject(new ResponseAddFriend());
+    }
+
+    public synchronized void updateFriend(MainClient mainClient, RequestUpdateFriend request)
+    {
+        User user = getUserByToken(request.getToken());
+        if (user != null)
+        {
+            mainClient.writeObject(new ResponseError("Oturum açmanız gerekiyor."));
+            return;
+        }
+
+        Session dbSession = getDbSessionFactory().openSession();
+        UserFriend userFriend = (UserFriend) dbSession.createCriteria(UserFriend.class)
+                .add(Restrictions.eq("user.username", request.getUsername()))
+                .uniqueResult();
+        if (userFriend == null)
+        {
+            mainClient.writeObject(new ResponseError("İşlem yapmak istediğiniz kullanıcı arkadaş listenizde bulunmamakta."));
+            return;
+        }
+
+        userFriend.setIsApproved(request.getStatus());
+
+        // TODO : İlgili kullanıcı online ise arkadaşlık isteği onaylama durumu bilgisi iletilmeli.
+    }
+
+    public synchronized void sendFriendList(MainClient mainClient, RequestSendFriendList request)
+    {
+        User user = getUserByToken(request.getToken());
+        if (user != null)
+        {
+            mainClient.writeObject(new ResponseError("Oturum açmanız gerekiyor."));
+            return;
+        }
+
+        Session dbSession = getDbSessionFactory().openSession();
+        List<UserFriend> friendList = (List<UserFriend>) dbSession.createCriteria(UserFriend.class)
+                             .add(Restrictions.or(
+                                 Restrictions.eq("user", user), Restrictions.eq("friend", user)))
+                             .list();
+
+        ArrayList<String> mapList = new ArrayList<String>();
+        for(UserFriend userFriend : friendList)
+        {
+            if (userFriend.getUser().equals(user))
+            {
+                mapList.add(userFriend.getFriend().getUsername());
+            }else{
+                mapList.add(userFriend.getUser().getUsername());
+            }
+        }
+
+        mainClient.writeObject(new ResponseSendFriendList(mapList));
+
+        // TODO : Online olan ve olmayan arkadaş durumları listede belirtilmeli.
     }
 
     public static void main(String args[])
