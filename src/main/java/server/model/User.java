@@ -15,11 +15,8 @@ public class User implements Serializable{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Column(name = "username", length = 16, unique = true, nullable = false)
+    @Column(name = "username", length = 20, unique = true, nullable = false)
     String username;
-
-    @Column(name = "email", length = 255, unique = true, nullable = false)
-    String email;
 
     @Column(name = "first_name", length = 255, nullable = false)
     String firstName;
@@ -47,14 +44,6 @@ public class User implements Serializable{
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public String getFirstName() {

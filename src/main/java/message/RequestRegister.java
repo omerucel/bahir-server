@@ -3,21 +3,35 @@ package message;
 import socket.message.IRequest;
 
 public class RequestRegister implements IRequest{
-    private String email;
+    private String username;
     private String password;
+    private String firstName;
+    private String lastName;
 
-    public RequestRegister(String email, String password) {
-        this.email = email;
+    public RequestRegister(String username, String password, String firstName,
+            String lastName) {
+        this.username = username;
         this.password = password;
+        this.firstName = firstName;
+        this.lastName = lastName;
     }
 
-    public String getEmail()
+    public String getUsername()
     {
-        return email;
+        return username;
     }
 
-    public String password()
+    public String getPassword()
     {
         return password;
     }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
 }

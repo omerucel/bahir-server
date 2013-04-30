@@ -1,6 +1,7 @@
 package socket;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -42,7 +43,9 @@ abstract public class ServerAbstract implements IServer{
 
     public void run() {
         try {
-            serverSocket = new ServerSocket(port);
+            serverSocket = new ServerSocket();
+            serverSocket.setReuseAddress(true);
+            serverSocket.bind(new InetSocketAddress(port));
         } catch (IOException ex) {
             getEventHandler().handleStartingFailed(ex);
             return;

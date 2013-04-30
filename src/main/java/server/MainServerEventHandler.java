@@ -27,6 +27,7 @@ public class MainServerEventHandler implements IServerEventHandler{
 
     public void handleClientConnected(Socket socket) {
         System.out.println(this.getClass().getName() + "::handleClientConnected");
+        new Thread(new MainClient(mainServer, socket)).start();
     }
 
     public void handleClientConnectionFailed(Exception ex) {
